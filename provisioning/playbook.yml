@@ -1,0 +1,73 @@
+---
+- hosts: all
+  become: true
+  tasks:
+    
+    - name: Disabling ufw service
+      systemd:
+        name: ufw
+        state: stopped
+        enabled: no
+
+    - name: Configuring SSH service
+      replace:
+        path: /etc/ssh/sshd_config.d/60-cloudimg-settings.conf
+        regexp: "PasswordAuthentication no"
+        replace: "PasswordAuthentication yes"
+
+    - name: Restarting SSH service
+      systemd:
+        name: sshd
+        state: restarted 
+
+    - name: Setting up forward packages across the routers
+      sysctl:
+        name: net.ipv4.ip_forward
+        value: '1'
+        state: present
+        reload: true 
+
+    - name: Installing necessary soft
+      apt:
+        name:
+          - traceroute
+          - tcpdump
+          - net-tools
+          - frr
+          - frr-pythontools
+        state: present
+        update_cache: yes
+      ignore_errors: true
+
+    - name: Disabling default route on all routers
+      template: 
+        src: 50-cloud-init.j2
+        dest: /etc/netplan/50-cloud-init.yaml
+
+    - name: Applying new netplan configuration
+      command: netplan apply
+      ignore_errors: true
+
+    - name: Copying frr daemon config 
+      template:
+        src: daemons
+        dest: /etc/frr/daemons       
+        owner: frr
+        group: frr
+        mode: 0640
+    
+    - name: Copying frr.conf
+      template:
+        src: frr.conf.j2
+        dest: /etc/frr/frr.conf
+        owner: frr
+        group: frr
+        mode: 0640
+    
+    - name: Restarting frr service
+      systemd:
+        name: frr
+        state: restarted
+        enabled: true
+
+...
