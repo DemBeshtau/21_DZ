@@ -1,0 +1,23 @@
+- hosts: all
+  become: true
+  vars_files:
+    - defaults/main.yml
+  tasks:
+    
+    - name: Setting up OSPF
+      template: 
+        src: frr.conf_sym.j2
+        dest: /etc/frr/frr.conf
+        owner: frr
+        group: frr
+        mode: 0640
+      tags:
+        - setup_ospf
+
+    - name: Restarting frr service
+      systemd:
+        name: frr
+        state: restarted
+        enabled: true
+      tags:
+        - setup_ospf

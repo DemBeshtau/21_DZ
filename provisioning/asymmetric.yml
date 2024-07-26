@@ -1,0 +1,26 @@
+---
+- hosts: all
+  become: true
+  tasks:
+    
+    - name: Setting up asynchronous routing
+      sysctl:
+        name: net.ipv4.conf.all.rp_filter
+        value: 0
+        state: present
+        reload: true
+    
+    - name: Setting up OSPF
+      template:
+        src: frr.conf_asym.j2
+        dest: /etc/frr/frr.conf
+        owner: frr
+        group: frr
+        mode: 0640
+
+    - name: Restarting frr service
+      systemd:
+        name: frr
+        state: restarted
+        enabled: true
+...

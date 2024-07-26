@@ -56,7 +56,7 @@
         group: frr
         mode: 0640
     
-    - name: Copying frr.conf
+    - name: Setting up OSPF
       template:
         src: frr.conf.j2
         dest: /etc/frr/frr.conf
